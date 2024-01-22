@@ -32,8 +32,6 @@ class YelpDataPublisher:
         This can be replaced by a real time streaming source
         Check out https://github.com/rotationalio/data-playground for examples
         """
-        # create the topic if it does not exist
-        await self.ensign.ensure_topic_exists(self.topic)
         train_df = pd.read_csv(os.path.join("data", "yelp.csv"))
         train_dict = train_df.to_dict("records")
         for record in train_dict:
@@ -67,7 +65,6 @@ class YelpDataSubscriber:
         """
         Make a prediction and update metrics based on the predicted value and the actual value
         Incrementally learn/update model based on the actual value
-        Continue until "done" message is received
         """
         record = json.loads(event.data)
         y_pred = self.model.predict_one(record["text"])
@@ -88,11 +85,6 @@ class YelpDataSubscriber:
         """
         Receive messages from river_pipeline topic
         """
-
-        # ensure that the topic exists or create it if it doesn't
-        await self.ensign.ensure_topic_exists(self.sub_topic)
-        await self.ensign.ensure_topic_exists(self.pub_topic)
-
         async for event in self.ensign.subscribe(self.sub_topic):
             await self.run_model_pipeline(event)
         
@@ -126,10 +118,6 @@ class MetricsSubscriber:
         """
         Receive messages from river_train_data topic
         """
-
-        # ensure that the topic exists or create it if it doesn't
-        await self.ensign.ensure_topic_exists(self.topic)
-
         async for event in self.ensign.subscribe(self.topic):
             await self.check_metrics(event)
 
